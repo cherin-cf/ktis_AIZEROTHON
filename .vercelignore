@@ -1,0 +1,10 @@
+# Keep deploy uploads lean / safe
+.next
+node_modules
+.video-analysis
+.git
+.DS_Store
+*.log
+.env
+.env.*
+.tsbuildinfo
