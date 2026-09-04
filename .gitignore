@@ -30,3 +30,5 @@ tsconfig.tsbuildinfo
 
 # Lockfile: keep package-lock.json for npm; ignore local pnpm if unused
 # (both present — Vercel will use package-lock when npm is detected)
+
+.vercel
