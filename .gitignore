@@ -1,0 +1,32 @@
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+.vercel/
+
+# Environment / secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*
+*secret*
+
+# Dependencies & build
+node_modules/
+.next/
+out/
+dist/
+tsconfig.tsbuildinfo
+
+# Local / analysis junk (not for deploy)
+.video-analysis/
+.DS_Store
+*.log
+.turbo/
+
+# Lockfile: keep package-lock.json for npm; ignore local pnpm if unused
+# (both present — Vercel will use package-lock when npm is detected)
