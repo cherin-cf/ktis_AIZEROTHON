@@ -169,7 +169,7 @@ export function IntroduceSection() {
         className="pointer-events-none absolute right-0 top-16 -z-[1] h-[22rem] w-[22rem] translate-x-1/3 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.12),transparent_70%)] blur-2xl"
       />
 
-      <div className="site-shell pointer-events-auto relative z-[1] pb-14 pt-2 md:pb-20 md:pt-3 lg:pb-24">
+      <div className="site-shell pointer-events-auto relative z-[1] px-1 pb-14 pt-4 sm:px-0 sm:pt-2 md:pb-20 md:pt-3 lg:pb-24">
         <div className="relative grid items-center gap-10 lg:grid-cols-12 lg:gap-6 xl:gap-8">
             <div className="relative z-[1] flex min-w-0 flex-col items-start lg:col-span-7 xl:col-span-7">
               <Reveal>
@@ -192,13 +192,13 @@ export function IntroduceSection() {
 
               <Reveal delay={0.12}>
                 <WorkwayInnovationLabel
-                  className={`${display.className} mt-8 text-[1.05rem] font-semibold uppercase tracking-[0.26em] md:mt-10 md:text-[1.2rem] lg:text-[1.35rem]`}
+                  className={`${display.className} mt-6 text-[0.92rem] font-semibold uppercase tracking-[0.18em] sm:mt-8 sm:text-[1.05rem] sm:tracking-[0.26em] md:mt-10 md:text-[1.2rem] lg:text-[1.35rem]`}
                 />
               </Reveal>
 
               <Reveal delay={0.24}>
-                <h2 className="mt-3 overflow-visible font-black italic leading-[0.92] tracking-[-0.04em] md:mt-4">
-                  <span className="inline-block -translate-x-[0.06em] whitespace-nowrap pb-3 pe-[0.28em] text-[clamp(3.85rem,10vw,8.25rem)] md:-translate-x-[0.08em]">
+                <h2 className="mt-2 overflow-visible font-black italic leading-[0.95] tracking-[-0.04em] sm:mt-3 md:mt-4">
+                  <span className="inline-block max-w-full -translate-x-[0.04em] whitespace-normal pb-2 pe-[0.2em] text-[clamp(2.6rem,14vw,8.25rem)] sm:-translate-x-[0.06em] sm:whitespace-nowrap sm:pb-3 sm:pe-[0.28em] md:-translate-x-[0.08em]">
                     <span className="text-white [text-shadow:0_0_28px_rgba(103,232,249,0.55)]">
                       WI{" "}
                     </span>
@@ -210,7 +210,7 @@ export function IntroduceSection() {
               </Reveal>
 
               <div
-                className={`${bodyKr.className} mt-6 max-w-[38rem] text-[1.15rem] font-medium leading-[1.75] text-white/92 md:mt-7 md:text-[1.35rem] md:leading-[1.8] lg:text-[1.45rem]`}
+                className={`${bodyKr.className} mt-5 max-w-[38rem] text-[1.02rem] font-medium leading-[1.7] text-white/92 sm:mt-6 sm:text-[1.15rem] sm:leading-[1.75] md:mt-7 md:text-[1.35rem] md:leading-[1.8] lg:text-[1.45rem]`}
               >
                 <Reveal delay={0.36}>
                   <p>
@@ -254,7 +254,7 @@ export function IntroduceSection() {
                             {title}
                           </p>
                           <p
-                            className={`${bodyKr.className} mt-1 whitespace-nowrap text-[0.88rem] font-medium leading-snug text-white/60 md:text-[0.95rem]`}
+                            className={`${bodyKr.className} mt-1 text-[0.88rem] font-medium leading-snug text-white/60 sm:whitespace-nowrap md:text-[0.95rem]`}
                           >
                             {desc}
                           </p>

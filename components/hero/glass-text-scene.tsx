@@ -624,10 +624,10 @@ function BalloonGlassText({
     by: 0,
     strength: 0,
   })
-  const { viewport } = useThree()
+  const { viewport, size } = useThree()
 
   /** Screen-width fraction for WI/ZEROTHON (applied every frame so edits always stick) */
-  const TITLE_FIT = 0.68
+  const TITLE_FIT = size.width < 640 ? 0.96 : 0.68
 
   const geometry = useMemo(() => {
     if (!font) return null
@@ -724,8 +724,10 @@ function BalloonGlassText({
 
   if (!geometry) return null
 
+  const titleOffsetX = size.width < 640 ? 0 : -0.18
+
   return (
-    <group ref={content} position={[-0.18, 0.42, 0]}>
+    <group ref={content} position={[titleOffsetX, 0.42, 0]}>
       <Center>
         <group ref={letterGroup}>
           <mesh geometry={geometry} castShadow={false} receiveShadow={false}>
@@ -846,6 +848,8 @@ function makeFallingSticker(
 ): FallingSticker {
   const w = viewport.width
   const h = viewport.height
+  const mobileBoost =
+    typeof window !== "undefined" && window.innerWidth < 640 ? 1.7 : 1
   return {
     texIndex,
     x: (Math.random() - 0.5) * w * 1.05,
@@ -861,6 +865,7 @@ function makeFallingSticker(
     size:
       w *
       (0.072 + Math.random() * 0.055) *
+      mobileBoost *
       (STICKER_SIZE_MUL[STICKER_URLS[texIndex]] ?? 1),
     phase: Math.random() * Math.PI * 2,
   }
@@ -896,7 +901,8 @@ function SceneStickers({
   }, [textures])
 
   useEffect(() => {
-    const n = reducedMotion ? 3 : FALL_COUNT
+    const n =
+      reducedMotion ? 3 : size.width < 640 ? Math.min(5, FALL_COUNT) : FALL_COUNT
     bagRef.current = createStickerBag(textures.length)
     const used = new Set<number>()
     items.current = Array.from({ length: n }, () => {
@@ -905,7 +911,7 @@ function SceneStickers({
       return makeFallingSticker(viewport, texIndex, false)
     })
     ready.current = true
-  }, [viewport.width, viewport.height, textures.length, reducedMotion])
+  }, [viewport.width, viewport.height, textures.length, reducedMotion, size.width])
 
   useFrame(({ clock }, dt) => {
     if (!ready.current) return
@@ -994,7 +1000,8 @@ function SceneStickers({
     })
   })
 
-  const count = reducedMotion ? 3 : FALL_COUNT
+  const count =
+    reducedMotion ? 3 : size.width < 640 ? Math.min(5, FALL_COUNT) : FALL_COUNT
 
   return (
     <group>

@@ -43,7 +43,8 @@ import { heroCtaRef } from "@/lib/hero-cta-ref"
 const USE_HERO_TITLE_GLASS_A = true
 
 /** Page 1 = first screen + short run past the CTA fold (before 이란?) */
-const PAGE1_H = "calc(100svh + min(28vh, 14rem))" as const
+const PAGE1_H =
+  "calc(100svh + min(18vh, 9rem))" as const
 
 /* -------------------------------------------------------------------------- */
 /* Motion system — springs & layer presets                                    */
@@ -695,16 +696,16 @@ export function HeroHaoqi() {
       ) : null}
 
       {/* ---------- HEADER: logo | centered nav | CTA ---------- */}
-      <header className="pointer-events-auto relative z-30 w-full px-3 py-5 sm:px-4 md:px-5 md:py-[1.35rem] lg:px-6 xl:px-8">
+      <header className="pointer-events-auto relative z-30 w-full px-3.5 py-3.5 sm:px-4 sm:py-5 md:px-5 md:py-[1.35rem] lg:px-6 xl:px-8">
         {/* Soft bright band behind menu (attachment glow) */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-[8%] top-1/2 hidden h-11 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(120,160,255,0.2)_0%,rgba(80,120,220,0.08)_45%,transparent_70%)] blur-md md:block"
         />
-        <div className="relative grid grid-cols-[1fr_auto] items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
+        <div className="relative grid grid-cols-[1fr_auto] items-center gap-2 sm:gap-3 md:grid-cols-[1fr_auto_1fr]">
           <a
             href="#top"
-            className="flex items-center justify-self-start"
+            className="flex max-w-[58vw] items-center justify-self-start sm:max-w-none"
             aria-label="kt is WI ZEROTHON home"
             data-cursor="link"
           >
@@ -715,7 +716,7 @@ export function HeroHaoqi() {
               width={642}
               height={96}
               draggable={false}
-              className="h-7 w-auto select-none object-contain object-left md:h-8"
+              className="h-6 w-auto max-w-full select-none object-contain object-left sm:h-7 md:h-8"
             />
           </a>
 
@@ -752,13 +753,16 @@ export function HeroHaoqi() {
               onClick={openApplyModal}
               data-cursor="link"
               style={{ fontFamily: "var(--font-nav)" }}
-              className="relative overflow-hidden rounded-full bg-gradient-to-r from-[#5b21b6] via-[#4338ca] to-[#1d4ed8] px-9 py-3 text-base font-extrabold tracking-tight text-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.55),0_0_18px_rgba(255,255,255,0.35),0_0_36px_rgba(255,255,255,0.15),0_3px_0_0_rgba(30,27,75,0.85),0_8px_22px_rgba(67,56,202,0.45),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:shadow-[0_0_0_1.5px_rgba(255,255,255,0.65),0_0_22px_rgba(255,255,255,0.4),0_0_40px_rgba(255,255,255,0.18),0_4px_0_0_rgba(30,27,75,0.85),0_12px_28px_rgba(67,56,202,0.55),inset_0_1px_0_rgba(255,255,255,0.32)] active:translate-y-0 md:min-w-[12.25rem] md:px-11 md:py-3 md:text-[1.05rem]"
+              className="relative overflow-hidden rounded-full bg-gradient-to-r from-[#5b21b6] via-[#4338ca] to-[#1d4ed8] px-4 py-2.5 text-[0.8rem] font-extrabold tracking-tight text-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.55),0_0_18px_rgba(255,255,255,0.35),0_0_36px_rgba(255,255,255,0.15),0_3px_0_0_rgba(30,27,75,0.85),0_8px_22px_rgba(67,56,202,0.45),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:shadow-[0_0_0_1.5px_rgba(255,255,255,0.65),0_0_22px_rgba(255,255,255,0.4),0_0_40px_rgba(255,255,255,0.18),0_4px_0_0_rgba(30,27,75,0.85),0_12px_28px_rgba(67,56,202,0.55),inset_0_1px_0_rgba(255,255,255,0.32)] active:translate-y-0 sm:px-7 sm:py-2.5 sm:text-sm md:min-w-[12.25rem] md:px-11 md:py-3 md:text-[1.05rem]"
             >
               <span
                 aria-hidden
                 className="pointer-events-none absolute inset-x-2 top-0 h-1/2 rounded-full bg-gradient-to-b from-white/22 to-transparent"
               />
-              <span className="relative">지금 신청하기 →</span>
+              <span className="relative">
+                <span className="sm:hidden">신청하기 →</span>
+                <span className="hidden sm:inline">지금 신청하기 →</span>
+              </span>
             </button>
           </div>
         </div>
@@ -766,7 +770,7 @@ export function HeroHaoqi() {
         {/* Short luminous hairline — deep blue with soft center glow */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-[8%] bottom-0 h-px md:inset-x-[10%]"
+          className="pointer-events-none absolute inset-x-[6%] bottom-0 h-px sm:inset-x-[8%] md:inset-x-[10%]"
           style={{
             background:
               "linear-gradient(90deg, transparent 0%, rgba(40,70,140,0.55) 12%, rgba(90,140,220,0.95) 38%, rgba(160,200,255,0.7) 50%, rgba(90,140,220,0.95) 62%, rgba(40,70,140,0.55) 88%, transparent 100%)",
@@ -774,7 +778,7 @@ export function HeroHaoqi() {
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-[16%] bottom-0 h-[2px] blur-[1.5px] md:inset-x-[18%]"
+          className="pointer-events-none absolute inset-x-[14%] bottom-0 h-[2px] blur-[1.5px] sm:inset-x-[16%] md:inset-x-[18%]"
           style={{
             background:
               "linear-gradient(90deg, transparent 0%, rgba(80,130,210,0.35) 30%, rgba(140,185,255,0.45) 50%, rgba(80,130,210,0.35) 70%, transparent 100%)",
@@ -788,36 +792,36 @@ export function HeroHaoqi() {
         y={info.y}
         className="pointer-events-none absolute inset-0 z-20"
       >
-        {/* 48-Hour — top-right */}
+        {/* 48-Hour — top-right; quieter on mobile */}
         <motion.h2
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute right-[clamp(0.75rem,3vw,2rem)] top-[clamp(5.5rem,11vh,7.5rem)] text-right text-3xl font-bold leading-[1.05] tracking-tight text-white [text-shadow:0_0_24px_rgba(160,200,255,0.35)] md:text-4xl lg:text-[2.75rem]"
+          className="absolute right-[clamp(0.85rem,4vw,2rem)] top-[clamp(4.75rem,10vh,7.5rem)] text-right text-[1.35rem] font-bold leading-[1.08] tracking-tight text-white/90 [text-shadow:0_0_20px_rgba(160,200,255,0.3)] sm:text-2xl md:text-4xl md:text-white md:[text-shadow:0_0_24px_rgba(160,200,255,0.35)] lg:text-[2.75rem]"
         >
           48-Hour
           <br />
           WI Zerothon
         </motion.h2>
 
-        {/* Bring a spark… → bottom-left */}
+        {/* Bring a spark… — mobile slightly higher; desktop keeps original band */}
         <motion.p
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute bottom-[clamp(14%,16vh,20%)] left-[clamp(1rem,4vw,3rem)] max-w-[16rem] font-mono text-sm leading-relaxed text-white/90 md:text-base"
+          className="absolute bottom-[clamp(26%,28vh,32%)] left-[clamp(1rem,4vw,3rem)] max-w-[14rem] font-mono text-[0.8rem] leading-relaxed text-white/90 sm:bottom-[clamp(14%,16vh,20%)] sm:max-w-[16rem] sm:text-sm md:text-base"
         >
           Bring a spark of an idea.
           <br />
           Leave with intelligence.
         </motion.p>
 
-        {/* Event blurb → mid-right */}
+        {/* Event blurb — md+ only */}
         <motion.p
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute right-[clamp(1rem,4vw,3rem)] top-[clamp(28%,34vh,42%)] max-w-[17rem] text-right font-mono text-xs leading-relaxed text-white/80 md:max-w-[19rem] md:text-sm"
+          className="absolute right-[clamp(1rem,4vw,3rem)] top-[clamp(28%,34vh,42%)] hidden max-w-[17rem] text-right font-mono text-xs leading-relaxed text-white/80 md:block md:max-w-[19rem] md:text-sm"
         >
           kt is WI ZEROTHON — a 48-hour build sprint where designers, engineers,
           and researchers turn zero into shipped. One question: what will you
@@ -835,14 +839,14 @@ export function HeroHaoqi() {
         ref={(node) => {
           ;(heroCtaRef as { current: HTMLElement | null }).current = node
         }}
-        className="pointer-events-none absolute inset-x-0 top-[min(78vh,80%)] z-[25] flex -translate-x-5 flex-col items-center gap-4 px-4 sm:top-[min(79vh,81%)] sm:-translate-x-6 sm:gap-5 md:top-[min(80vh,82%)] md:-translate-x-8"
+        className="pointer-events-none absolute inset-x-0 top-[min(72vh,74%)] z-[25] flex translate-x-0 flex-col items-center gap-3.5 px-5 sm:top-[min(79vh,81%)] sm:-translate-x-6 sm:gap-5 sm:px-4 md:top-[min(80vh,82%)] md:-translate-x-8"
       >
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           style={{ x: headline.x, y: headline.y }}
-          className="text-center text-sm font-semibold uppercase tracking-[0.22em] text-white sm:text-base sm:tracking-[0.26em] md:text-lg md:tracking-[0.28em]"
+          className="max-w-[20rem] text-center text-[0.78rem] font-semibold uppercase leading-snug tracking-[0.14em] text-white/95 sm:max-w-none sm:text-base sm:tracking-[0.26em] md:text-lg md:tracking-[0.28em]"
         >
           What will you build with{" "}
           <span className="bg-gradient-to-r from-[#22d3ee] via-[#67e8f9] to-[#c084fc] bg-clip-text font-bold text-transparent [text-shadow:none] drop-shadow-[0_0_18px_rgba(34,211,238,0.45)]">
@@ -857,14 +861,14 @@ export function HeroHaoqi() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="pointer-events-auto flex flex-wrap items-center justify-center gap-4 sm:gap-5"
+          className="pointer-events-auto flex w-full max-w-[22rem] flex-col items-stretch gap-2.5 sm:max-w-none sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-5"
           style={{ fontFamily: "var(--font-nav)" }}
         >
           <button
             type="button"
             onClick={openApplyModal}
             data-cursor="link"
-            className="relative min-w-[14.5rem] overflow-hidden rounded-full bg-gradient-to-r from-[#a855f7] via-[#6366f1] to-[#22d3ee] px-12 py-3.5 text-base font-extrabold tracking-tight text-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.6),0_0_20px_rgba(255,255,255,0.4),0_0_42px_rgba(255,255,255,0.18),0_0_28px_rgba(99,102,241,0.45),0_0_48px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] ring-1 ring-white/45 transition hover:brightness-110 md:min-w-[16.5rem] md:px-14 md:py-4 md:text-lg"
+            className="relative w-full overflow-hidden rounded-full bg-gradient-to-r from-[#a855f7] via-[#6366f1] to-[#22d3ee] px-8 py-3.5 text-[0.95rem] font-extrabold tracking-tight text-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.6),0_0_20px_rgba(255,255,255,0.4),0_0_42px_rgba(255,255,255,0.18),0_0_28px_rgba(99,102,241,0.45),0_0_48px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] ring-1 ring-white/45 transition hover:brightness-110 sm:w-auto sm:min-w-[14.5rem] sm:px-12 sm:text-base md:min-w-[16.5rem] md:px-14 md:py-4 md:text-lg"
           >
             <span
               aria-hidden
@@ -879,7 +883,7 @@ export function HeroHaoqi() {
           <a
             href="#introduce"
             data-cursor="link"
-            className="min-w-[14.5rem] rounded-full border border-[#7dd3fc]/70 bg-transparent px-12 py-3.5 text-center text-base font-bold tracking-tight text-white transition hover:border-[#a5f3fc] hover:bg-white/5 md:min-w-[16.5rem] md:px-14 md:py-4 md:text-lg"
+            className="w-full rounded-full border border-[#7dd3fc]/70 bg-transparent px-8 py-3.5 text-center text-[0.95rem] font-bold tracking-tight text-white transition hover:border-[#a5f3fc] hover:bg-white/5 sm:w-auto sm:min-w-[14.5rem] sm:px-12 sm:text-base md:min-w-[16.5rem] md:px-14 md:py-4 md:text-lg"
           >
             대회 소개 보기
           </a>
@@ -891,10 +895,8 @@ export function HeroHaoqi() {
       {/* Props live on full Earth frame (not first-screen box) — no 100svh clip */}
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute z-[15] hidden sm:block"
+        className="pointer-events-none absolute z-[15] left-[0.35rem] top-[11%] sm:left-[clamp(1.25rem,3.5vw,2.75rem)] sm:top-[clamp(8%,10vh,14%)]"
         style={{
-          left: "clamp(1.25rem, 3.5vw, 2.75rem)",
-          top: "clamp(8%, 10vh, 14%)",
           x: robotX,
           y: robotY,
           rotate: robotFloat.rotate,
@@ -907,16 +909,14 @@ export function HeroHaoqi() {
           src="/hero/ROBOT.png"
           alt=""
           draggable={false}
-          className="h-auto w-[min(28vw,250px)] select-none object-contain md:w-[min(24vw,280px)] lg:w-[min(20vw,310px)]"
+          className="h-auto w-[6.75rem] select-none object-contain opacity-95 sm:w-[min(28vw,250px)] sm:opacity-100 md:w-[min(24vw,280px)] lg:w-[min(20vw,310px)]"
         />
       </motion.div>
 
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute z-[15] hidden sm:block"
+        className="pointer-events-none absolute z-[15] right-[0.15rem] top-[56%] sm:right-[clamp(0.75rem,3vw,2.5rem)] sm:top-[min(72vh,78%)]"
         style={{
-          right: "clamp(0.75rem, 3vw, 2.5rem)",
-          top: "min(72vh, 78%)",
           x: laptopX,
           y: laptopY,
           rotate: laptopFloat.rotate,
@@ -929,7 +929,7 @@ export function HeroHaoqi() {
           src="/hero/NEW_NOTEBOOK.png"
           alt=""
           draggable={false}
-          className="h-auto w-[min(30vw,260px)] rotate-[8deg] select-none object-contain md:w-[min(26vw,280px)] lg:w-[min(22vw,300px)]"
+          className="h-auto w-[7.25rem] rotate-[6deg] select-none object-contain opacity-95 sm:w-[min(30vw,260px)] sm:rotate-[8deg] sm:opacity-100 md:w-[min(26vw,280px)] lg:w-[min(22vw,300px)]"
         />
       </motion.div>
       </div>
