@@ -242,7 +242,7 @@ const SCHEDULE = [
     iconAlt: "대상자 모집",
     title: "1. 대상자 모집/참가서류 제출",
     desc: "  참가 신청 및 참가서류를 접수합니다.",
-    date: "~9.18.(금)",
+    date: "~9.21.(월)",
   },
   {
     day: "STEP 02",
@@ -250,7 +250,7 @@ const SCHEDULE = [
     iconAlt: "참가 팀 발표",
     title: "2. 참가 팀 발표",
     desc: "  최종 참가 팀을 발표합니다.",
-    date: "9.28.(월)",
+    date: "10.2.(금)",
   },
   {
     day: "STEP 03",
@@ -568,7 +568,7 @@ export function GuideSection() {
                         alt=""
                         width={512}
                         height={512}
-                        className="h-9 w-auto mix-blend-screen md:h-10"
+                        className="h-9 w-auto md:h-10"
                       />
                       <h3 className="text-2xl font-bold text-foreground md:text-3xl">
                         참가 신청 방법
@@ -602,7 +602,7 @@ export function GuideSection() {
                         alt=""
                         width={512}
                         height={512}
-                        className="h-9 w-auto mix-blend-screen md:h-10"
+                        className="h-9 w-auto md:h-10"
                       />
                       <h3 className="text-2xl font-bold text-foreground md:text-3xl">
                         팀원을 못 찾았다면?

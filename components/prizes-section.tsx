@@ -11,7 +11,7 @@ function AwardImg({
   width,
   height,
   className = "",
-  screen = true,
+  screen = false,
 }: {
   src: string
   alt: string
@@ -504,7 +504,7 @@ export function PrizesSection() {
               수상을 넘어, 더 큰 프로젝트로 이어질 기회를 제공합니다.
             </p>
             <p className="mt-2 max-w-3xl font-sans text-base leading-relaxed text-foreground/60 md:text-lg">
-              (참가 시 MS 365 Copilot 권한 부여)
+              (최종 참가자 전체 MS 365 Copilot 권한 부여)
             </p>
           </Reveal>
         </div>

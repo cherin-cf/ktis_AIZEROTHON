@@ -1,11 +1,16 @@
 "use client"
 
 /**
- * HeroHaoqi — layered motion + WebGL glass / cursor lens (MVP).
+ * HeroHaoqi — layered motion + hero title.
  *
- * Motion: translation depth, springs, idle float, soft light/shadow.
- * WebGL: original spectral glass (navy/cyan/white) + swirl/bokeh lens.
- * Does not copy haoqi.design shader source — technique only.
+ * TITLE MODES (toggle USE_HERO_TITLE_GLASS_A below):
+ * - A (active, true): WebGL Lobster jelly glass + falling stickers
+ * - B (false): prerender hybrid — /hero/title-wi-zerothon.png + light parallax
+ *
+ * Remembered A upgrade path (if improving realtime 3D later):
+ * 1) Swap Lobster → geometric black sans + sharp chamfer bevels
+ * 2) Layered materials (transmission body + rim/clearcoat + specular highlights)
+ * Keep mouse wand deformation; do not rely on prerender for A.
  */
 
 import {
@@ -14,12 +19,14 @@ import {
   useMotionTemplate,
   useMotionValue,
   useMotionValueEvent,
+  useScroll,
   useSpring,
   useTransform,
 } from "framer-motion"
 import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
+  type MutableRefObject,
   type ReactNode,
   type RefObject,
   useEffect,
@@ -29,8 +36,14 @@ import {
 } from "react"
 import { HeroGlassText } from "@/components/hero/glass-text-scene"
 import { HeroLoader } from "@/components/hero-loader"
-import { KtIsMark } from "@/components/kt-is-mark"
 import { useApplyModal } from "@/components/apply/apply-modal-context"
+import { heroCtaRef } from "@/lib/hero-cta-ref"
+
+/** true = A (WebGL glass) · false = B (prerender title hybrid) */
+const USE_HERO_TITLE_GLASS_A = true
+
+/** Page 1 = first screen + short run past the CTA fold (before 이란?) */
+const PAGE1_H = "calc(100svh + min(28vh, 14rem))" as const
 
 /* -------------------------------------------------------------------------- */
 /* Motion system — springs & layer presets                                    */
@@ -86,7 +99,11 @@ type FloatSpec = {
 /* Hooks (Hero-scoped; do not leak into the app)                              */
 /* -------------------------------------------------------------------------- */
 
-function useHeroPointer(sectionRef: RefObject<HTMLElement | null>) {
+function useHeroPointer(
+  sectionRef: RefObject<HTMLDivElement | null>,
+  titleZoneRef?: RefObject<HTMLDivElement | null>,
+  glassPointerRef?: MutableRefObject<{ x: number; y: number }>,
+) {
   const rawX = useMotionValue(0)
   const rawY = useMotionValue(0)
 
@@ -123,6 +140,22 @@ function useHeroPointer(sectionRef: RefObject<HTMLElement | null>) {
     rawX.set(px - 0.5)
     rawY.set(py - 0.5)
 
+    // Glass wand must use the title-stage box (first screen), not full Earth height
+    if (glassPointerRef) {
+      const zone = titleZoneRef?.current
+      if (zone) {
+        const zr = zone.getBoundingClientRect()
+        const zw = Math.max(1, zr.width)
+        const zh = Math.max(1, zr.height)
+        glassPointerRef.current = {
+          x: (e.clientX - zr.left) / zw - 0.5,
+          y: (e.clientY - zr.top) / zh - 0.5,
+        }
+      } else {
+        glassPointerRef.current = { x: px - 0.5, y: py - 0.5 }
+      }
+    }
+
     pending.current = {
       x: Math.round(e.clientX - rect.left),
       y: Math.round(e.clientY - rect.top),
@@ -133,6 +166,7 @@ function useHeroPointer(sectionRef: RefObject<HTMLElement | null>) {
   const onLeave = () => {
     rawX.set(0)
     rawY.set(0)
+    if (glassPointerRef) glassPointerRef.current = { x: 0, y: 0 }
   }
 
   // Slow CSS gradient focal (atmosphere spring) — not a glow element
@@ -152,6 +186,31 @@ function useHeroPointer(sectionRef: RefObject<HTMLElement | null>) {
   useEffect(() => () => {
     if (raf.current) cancelAnimationFrame(raf.current)
   }, [])
+
+  // Reliable glass wand tracking (section onMouseMove can miss under overlays)
+  useEffect(() => {
+    if (!glassPointerRef || !titleZoneRef) return
+    const onMove = (e: PointerEvent) => {
+      const zone = titleZoneRef.current
+      if (!zone) return
+      const zr = zone.getBoundingClientRect()
+      const zw = Math.max(1, zr.width)
+      const zh = Math.max(1, zr.height)
+      glassPointerRef.current = {
+        x: (e.clientX - zr.left) / zw - 0.5,
+        y: (e.clientY - zr.top) / zh - 0.5,
+      }
+    }
+    const onLeave = () => {
+      glassPointerRef.current = { x: 0, y: 0 }
+    }
+    window.addEventListener("pointermove", onMove, { passive: true })
+    window.addEventListener("pointerleave", onLeave)
+    return () => {
+      window.removeEventListener("pointermove", onMove)
+      window.removeEventListener("pointerleave", onLeave)
+    }
+  }, [glassPointerRef, titleZoneRef])
 
   return {
     coords,
@@ -260,20 +319,48 @@ function Crosshair({ className = "" }: { className?: string }) {
 /* Hero                                                                       */
 /* -------------------------------------------------------------------------- */
 
+/** EARTH art — drop mid void so the limb sits nearer the title */
+const EARTH_IMG = { w: 1024, h: 1536, src: "/hero/EARTH.png" } as const
+/** Keep space/moons through this fraction of the source */
+const EARTH_KEEP_TOP = 0.24
+/** Resume at the atmospheric limb */
+const EARTH_KEEP_FROM = 0.465
+/** Nudge top-left moon/planet higher in the frame (source-height fraction) */
+const EARTH_TOP_LIFT = 0.055
+/** >1 zooms the top plate out slightly (moon reads smaller; keeps right crescent in frame) */
+const EARTH_TOP_ZOOM_OUT = 1.14
+const EARTH_TOP_H = EARTH_IMG.h * EARTH_KEEP_TOP
+const EARTH_BOT_H = EARTH_IMG.h * (1 - EARTH_KEEP_FROM)
+const EARTH_JOIN_FADE = "linear-gradient(to bottom, transparent 0%, #000 14%)"
+
 export function HeroHaoqi() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const pointer = useHeroPointer(sectionRef)
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const titleZoneRef = useRef<HTMLDivElement>(null)
+  const glassPointerRef = useRef({ x: 0, y: 0 })
+  const pointer = useHeroPointer(sectionRef, titleZoneRef, glassPointerRef)
   const { openApplyModal } = useApplyModal()
 
   const [reducedMotion, setReducedMotion] = useState(false)
-  const [glassPointer, setGlassPointer] = useState({ x: 0, y: 0 })
   const [glassReady, setGlassReady] = useState(false)
   const [showLoader, setShowLoader] = useState(true)
   const loadStartedAt = useRef(
     typeof performance !== "undefined" ? performance.now() : 0,
   )
-  const glassRaf = useRef(0)
 
+  /**
+   * Stage 1 — during / after first-screen scroll (ZEROTHON page):
+   * Earth below the limb fades to void. Space above stays clear.
+   */
+  const page1Ref = useRef<HTMLDivElement>(null)
+  const { scrollYProgress: firstScreenScroll } = useScroll({
+    target: page1Ref,
+    offset: ["start start", "end start"],
+  })
+  const bottomDark = useTransform(
+    firstScreenScroll,
+    [0.05, 0.28, 0.55],
+    [0, 0.62, 1],
+  )
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
     const apply = () => setReducedMotion(mq.matches)
@@ -292,6 +379,13 @@ export function HeroHaoqi() {
     return () => window.clearTimeout(t)
   }, [glassReady])
 
+  // B mode: don't block forever if title image cache-skips onLoad
+  useEffect(() => {
+    if (USE_HERO_TITLE_GLASS_A) return
+    const t = window.setTimeout(() => setGlassReady(true), 2500)
+    return () => window.clearTimeout(t)
+  }, [])
+
   useEffect(() => {
     if (!showLoader) return
     const prev = document.body.style.overflow
@@ -300,23 +394,6 @@ export function HeroHaoqi() {
       document.body.style.overflow = prev
     }
   }, [showLoader])
-
-  useMotionValueEvent(pointer.raw.x, "change", (vx) => {
-    const vy = pointer.raw.y.get()
-    if (glassRaf.current) return
-    glassRaf.current = requestAnimationFrame(() => {
-      glassRaf.current = 0
-      setGlassPointer({ x: vx, y: vy })
-    })
-  })
-  useMotionValueEvent(pointer.raw.y, "change", (vy) => {
-    const vx = pointer.raw.x.get()
-    if (glassRaf.current) return
-    glassRaf.current = requestAnimationFrame(() => {
-      glassRaf.current = 0
-      setGlassPointer({ x: vx, y: vy })
-    })
-  })
 
   // Layer parallax bindings
   const bg = useParallax(
@@ -339,135 +416,402 @@ export function HeroHaoqi() {
     pointer.springs.typeY,
     LAYER_DEPTH.headline,
   )
+  const propMid = useParallax(
+    pointer.springs.accentX,
+    pointer.springs.accentY,
+    LAYER_DEPTH.stickerMid,
+  )
+  const propNear = useParallax(
+    pointer.springs.accentX,
+    pointer.springs.accentY,
+    LAYER_DEPTH.stickerNear,
+  )
+  const robotFloat = useFloating({
+    ampX: 5,
+    ampY: 9,
+    ampR: 1.8,
+    duration: 7.2,
+    phase: 0.35,
+  })
+  const laptopFloat = useFloating({
+    ampX: 4,
+    ampY: 7,
+    ampR: 1.2,
+    duration: 8.6,
+    phase: 1.4,
+  })
+  const robotX = useTransform(
+    [propMid.x, robotFloat.x],
+    ([a, b]) => (a as number) + (b as number),
+  )
+  const robotY = useTransform(
+    [propMid.y, robotFloat.y],
+    ([a, b]) => (a as number) + (b as number),
+  )
+  const laptopX = useTransform(
+    [propNear.x, laptopFloat.x],
+    ([a, b]) => (a as number) + (b as number),
+  )
+  const laptopY = useTransform(
+    [propNear.y, laptopFloat.y],
+    ([a, b]) => (a as number) + (b as number),
+  )
+  const robotShadow = useDynamicShadow(
+    pointer.springs.accentX,
+    pointer.springs.accentY,
+    0.85,
+  )
+  const laptopShadow = useDynamicShadow(
+    pointer.springs.accentX,
+    pointer.springs.accentY,
+    0.7,
+  )
+  const titleParallax = useParallax(
+    pointer.springs.baseX,
+    pointer.springs.baseY,
+    LAYER_DEPTH.main,
+  )
+  const titleFloat = useFloating({
+    ampX: 3,
+    ampY: 5,
+    ampR: 0.4,
+    duration: 9.5,
+    phase: 0.8,
+  })
+  const titleX = useTransform(
+    [titleParallax.x, titleFloat.x],
+    ([a, b]) => (a as number) + (b as number),
+  )
+  const titleY = useTransform(
+    [titleParallax.y, titleFloat.y],
+    ([a, b]) => (a as number) + (b as number),
+  )
 
   return (
-    <section
-      ref={sectionRef}
-      id="top"
-      onMouseMove={pointer.onMove}
-      onMouseLeave={pointer.onLeave}
-      className="relative flex h-screen min-h-[720px] w-full flex-col overflow-hidden bg-background"
-      style={
-        {
-          ["--mx" as string]: "50%",
-          ["--my" as string]: "42%",
-        } as CSSProperties
-      }
-    >
-      <HeroLoader visible={showLoader} ready={glassReady} />
-
-      {/* ---------- Background — focal via --mx/--my (WebGL owns main field) ---------- */}
-      <MotionLayer
-        x={bg.x}
-        y={bg.y}
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 70% at var(--mx) var(--my), color-mix(in oklch, #1a2558 55%, transparent) 0%, transparent 70%)",
-        }}
-      />
-
-      {/* Diagonal light streaks — under glass; parallax only, no cursor blob */}
-      <MotionLayer
-        x={gradient.x}
-        y={gradient.y}
-        className="pointer-events-none absolute inset-0 z-[8] mix-blend-screen"
+    <section id="top" className="relative z-10 w-full overflow-x-clip overflow-y-visible bg-[#09071c]">
+      {/*
+        EARTH framed for title: keep top space + Earth limb/bottom,
+        skip the empty mid void so the planet sits near ZEROTHON.
+      */}
+      <div
+        ref={sectionRef}
+        onMouseMove={pointer.onMove}
+        onMouseLeave={pointer.onLeave}
+        className="relative z-10 w-full overflow-x-clip overflow-y-visible"
+        style={
+          {
+            /* Cap to page 1 — no empty night strip below sticker cutoff */
+            height: PAGE1_H,
+            minHeight: PAGE1_H,
+            ["--mx" as string]: "50%",
+            ["--my" as string]: "42%",
+          } as CSSProperties
+        }
       >
+        {/* Earth art — never fade the whole frame (top must stay lit) */}
+        <div className="pointer-events-none absolute inset-0 z-0">
+        {/* Top plate — space / moons / streaks */}
         <div
           aria-hidden
-          className="absolute inset-0"
+          className="absolute inset-x-0 top-0 overflow-hidden"
+          style={{
+            height: `${((EARTH_TOP_H + EARTH_IMG.h * 0.05) / (EARTH_TOP_H + EARTH_BOT_H)) * 100}%`,
+            WebkitMaskImage:
+              "linear-gradient(to bottom, #000 0%, #000 78%, transparent 100%)",
+            maskImage:
+              "linear-gradient(to bottom, #000 0%, #000 78%, transparent 100%)",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={EARTH_IMG.src}
+            alt=""
+            width={EARTH_IMG.w}
+            height={EARTH_IMG.h}
+            draggable={false}
+            decoding="async"
+            className="absolute left-0 w-full max-w-none select-none"
+            style={{
+              height: `${(EARTH_IMG.h / (EARTH_TOP_H * EARTH_TOP_ZOOM_OUT)) * 100}%`,
+              top: `${(-EARTH_TOP_LIFT / (EARTH_KEEP_TOP * EARTH_TOP_ZOOM_OUT)) * 100}%`,
+            }}
+          />
+        </div>
+
+        {/* Bottom plate — limb + night side (feathered into top) */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 overflow-hidden"
+          style={{
+            height: `${((EARTH_BOT_H + EARTH_IMG.h * 0.05) / (EARTH_TOP_H + EARTH_BOT_H)) * 100}%`,
+            WebkitMaskImage: EARTH_JOIN_FADE,
+            maskImage: EARTH_JOIN_FADE,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={EARTH_IMG.src}
+            alt=""
+            width={EARTH_IMG.w}
+            height={EARTH_IMG.h}
+            draggable={false}
+            decoding="async"
+            className="absolute left-0 w-full max-w-none select-none"
+            style={{
+              height: `${(EARTH_IMG.h / EARTH_BOT_H) * 100}%`,
+              top: `${(-EARTH_KEEP_FROM / (1 - EARTH_KEEP_FROM)) * 100}%`,
+            }}
+          />
+        </div>
+        </div>
+
+        {/* Soft exit — Earth stars feather into void (kills hard cut above countdown) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[4] h-[42%]"
           style={{
             background:
-              "linear-gradient(115deg, transparent 30%, color-mix(in oklch, var(--primary) 18%, transparent) 46%, transparent 54%, color-mix(in oklch, var(--primary) 10%, transparent) 66%, transparent 74%)",
+              "linear-gradient(180deg, transparent 0%, rgba(9,7,28,0.18) 22%, rgba(9,7,28,0.55) 48%, rgba(9,7,28,0.88) 72%, #09071c 92%, #09071c 100%)",
           }}
         />
-      </MotionLayer>
 
-      <HeroGlassText
-        pointerX={glassPointer.x}
-        pointerY={glassPointer.y}
-        reducedMotion={reducedMotion}
-        onReady={() => setGlassReady(true)}
-      />
+        {/* Night veil from limb downward — visible on the “one scroll” Earth page */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[5]"
+          style={{
+            top: "38%",
+            opacity: bottomDark,
+            background:
+              "linear-gradient(180deg, transparent 0%, rgba(9,7,28,0.22) 14%, rgba(9,7,28,0.62) 36%, rgba(9,7,28,0.92) 62%, #09071c 86%, #09071c 100%)",
+          }}
+        />
 
-      {/* ---------- HEADER ---------- */}
-      <header className="site-shell relative z-30 flex items-center justify-between py-6">
-        <a
-          href="#top"
-          className="flex items-center gap-2.5 md:gap-3.5"
-          aria-label="kt is WI ZEROTHON home"
-          data-cursor="link"
+        {/* Soft wash — full framed height */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-[2]"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 28% at 50% 12%, rgba(5,8,28,0.14), transparent 58%), linear-gradient(180deg, rgba(5,8,20,0.18) 0%, transparent 14%, transparent 100%)",
+          }}
+        />
+
+        <MotionLayer
+          x={bg.x}
+          y={bg.y}
+          className="pointer-events-none absolute inset-0 z-[2]"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 42% at var(--mx) var(--my), color-mix(in oklch, #1a2558 20%, transparent) 0%, transparent 70%)",
+          }}
+        />
+
+        <MotionLayer
+          x={gradient.x}
+          y={gradient.y}
+          className="pointer-events-none absolute inset-x-0 top-0 z-[8] h-[min(100%,100svh)] mix-blend-screen"
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%)",
+            maskImage:
+              "linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%)",
+          }}
         >
-          <KtIsMark className="h-7 w-auto md:h-8" />
-          <span className="text-base font-bold tracking-[0.08em] text-foreground md:text-lg">
-            WI ZEROTHON
-          </span>
-        </a>
-        <nav className="hidden items-center gap-3 md:flex lg:gap-4">
-          {[
-            { label: "대회 소개", href: "#about" },
-            { label: "참가 방법", href: "#guide" },
-          ].map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              data-cursor="link"
-              className="font-pixel inline-flex items-center justify-center rounded-lg border-2 border-[#d8b4fe] bg-gradient-to-br from-[#6d4aff] via-[#5530c8] to-[#3b1f9e] px-5 py-3 text-base font-semibold leading-none tracking-wide text-white shadow-[0_0_0_1px_rgba(216,180,254,0.5),0_0_24px_rgba(124,108,240,0.55),0_0_48px_rgba(109,74,255,0.35)] transition-all hover:-translate-y-0.5 hover:border-[#ede9fe] hover:from-[#7c5cff] hover:via-[#6340d8] hover:to-[#4a28b0] hover:shadow-[0_0_0_1px_rgba(237,233,254,0.7),0_0_32px_rgba(167,139,250,0.75),0_0_64px_rgba(124,108,240,0.45)] md:px-6 md:py-3.5 md:text-lg lg:px-7 lg:py-4 lg:text-xl"
-            >
-              {item.label}
-            </a>
-          ))}
-          <button
-            type="button"
-            onClick={openApplyModal}
-            data-cursor="link"
-            className="font-pixel inline-flex items-center justify-center rounded-lg border-2 border-[#d8b4fe] bg-gradient-to-br from-[#6d4aff] via-[#5530c8] to-[#3b1f9e] px-5 py-3 text-base font-semibold leading-none tracking-wide text-white shadow-[0_0_0_1px_rgba(216,180,254,0.5),0_0_24px_rgba(124,108,240,0.55),0_0_48px_rgba(109,74,255,0.35)] transition-all hover:-translate-y-0.5 hover:border-[#ede9fe] hover:from-[#7c5cff] hover:via-[#6340d8] hover:to-[#4a28b0] hover:shadow-[0_0_0_1px_rgba(237,233,254,0.7),0_0_32px_rgba(167,139,250,0.75),0_0_64px_rgba(124,108,240,0.45)] md:px-6 md:py-3.5 md:text-lg lg:px-7 lg:py-4 lg:text-xl"
-          >
-            참가 신청
-          </button>
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(115deg, transparent 30%, color-mix(in oklch, var(--primary) 14%, transparent) 46%, transparent 54%, color-mix(in oklch, var(--primary) 8%, transparent) 66%, transparent 74%)",
+            }}
+          />
+        </MotionLayer>
+
+        {/* Soft bridge over the join (hides any remaining cut) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 z-[3]"
+          style={{
+            top: `${(EARTH_TOP_H / (EARTH_TOP_H + EARTH_BOT_H)) * 100 - 5}%`,
+            height: "12%",
+            background:
+              "linear-gradient(180deg, transparent 0%, rgba(3,7,20,0.28) 45%, transparent 100%)",
+          }}
+        />
+
+        {/*
+          Page 1 = first screen (100svh) + former middle height.
+          Glass/stickers fill page 1; UI stays locked to the top 100svh.
+        */}
+        <div
+          ref={page1Ref}
+          className="pointer-events-none absolute inset-0 z-[12]"
+        >
+      {/* WebGL title + sticker rain across full page 1 */}
+      {USE_HERO_TITLE_GLASS_A ? (
+        <HeroGlassText
+          pointerRef={glassPointerRef}
+          reducedMotion={reducedMotion}
+          onReady={() => setGlassReady(true)}
+        />
+      ) : null}
+
+      {/* First-screen UI box — % / clamp stay relative to 100svh */}
+      <div
+        ref={titleZoneRef}
+        className="pointer-events-none absolute inset-x-0 top-0 z-[12] h-[100svh]"
+      >
+      <HeroLoader visible={showLoader} ready={glassReady} />
+
+      {/* ---------- TITLE: B = prerender hybrid (A is full page-1 canvas above) ---------- */}
+      {!USE_HERO_TITLE_GLASS_A ? (
+        <motion.div
+          className="pointer-events-none absolute inset-0 z-[12] flex items-center justify-center"
+          style={{
+            x: titleX,
+            y: titleY,
+            rotate: reducedMotion ? 0 : titleFloat.rotate,
+            willChange: "transform",
+          }}
+        >
+          <div className="relative w-[min(92vw,860px)] -translate-y-[4vh] md:w-[min(78vw,920px)] md:-translate-y-[2vh]">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.22),rgba(168,85,247,0.12)_45%,transparent_70%)] blur-2xl"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/hero/title-wi-zerothon.png"
+              alt="WI ZEROTHON"
+              width={492}
+              height={190}
+              draggable={false}
+              onLoad={() => setGlassReady(true)}
+              className="relative z-[1] h-auto w-full select-none object-contain drop-shadow-[0_0_40px_rgba(96,165,250,0.35)]"
+            />
+          </div>
+        </motion.div>
+      ) : null}
+
+      {/* ---------- HEADER: logo | centered nav | CTA ---------- */}
+      <header className="pointer-events-auto relative z-30 w-full px-3 py-5 sm:px-4 md:px-5 md:py-[1.35rem] lg:px-6 xl:px-8">
+        {/* Soft bright band behind menu (attachment glow) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-[8%] top-1/2 hidden h-11 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(120,160,255,0.2)_0%,rgba(80,120,220,0.08)_45%,transparent_70%)] blur-md md:block"
+        />
+        <div className="relative grid grid-cols-[1fr_auto] items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
           <a
-            href="#faq"
+            href="#top"
+            className="flex items-center justify-self-start"
+            aria-label="kt is WI ZEROTHON home"
             data-cursor="link"
-            className="font-pixel inline-flex items-center justify-center rounded-lg border-2 border-[#d8b4fe] bg-gradient-to-br from-[#6d4aff] via-[#5530c8] to-[#3b1f9e] px-5 py-3 text-base font-semibold leading-none tracking-wide text-white shadow-[0_0_0_1px_rgba(216,180,254,0.5),0_0_24px_rgba(124,108,240,0.55),0_0_48px_rgba(109,74,255,0.35)] transition-all hover:-translate-y-0.5 hover:border-[#ede9fe] hover:from-[#7c5cff] hover:via-[#6340d8] hover:to-[#4a28b0] hover:shadow-[0_0_0_1px_rgba(237,233,254,0.7),0_0_32px_rgba(167,139,250,0.75),0_0_64px_rgba(124,108,240,0.45)] md:px-6 md:py-3.5 md:text-lg lg:px-7 lg:py-4 lg:text-xl"
           >
-            FAQ
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/wi-zerothon-logo-dark.png"
+              alt="kt is WI ZEROTHON"
+              width={642}
+              height={96}
+              draggable={false}
+              className="h-7 w-auto select-none object-contain object-left md:h-8"
+            />
           </a>
-        </nav>
+
+          <nav
+            aria-label="Primary"
+            className="hidden items-center justify-self-center gap-24 -translate-x-6 md:flex lg:gap-28 lg:-translate-x-10 xl:gap-32 xl:-translate-x-12"
+            style={{ fontFamily: "var(--font-nav)" }}
+          >
+            {[
+              { label: "대회 소개", href: "#about" },
+              { label: "참가 방법", href: "#guide" },
+              { label: "FAQ", href: "#faq" },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                data-cursor="link"
+                className="text-base font-bold tracking-tight text-white/95 [text-shadow:0_0_16px_rgba(180,210,255,0.35)] transition hover:text-white md:text-lg lg:text-xl"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="justify-self-end">
+            <button
+              type="button"
+              onClick={openApplyModal}
+              data-cursor="link"
+              style={{ fontFamily: "var(--font-nav)" }}
+              className="relative overflow-hidden rounded-full bg-gradient-to-r from-[#5b21b6] via-[#4338ca] to-[#1d4ed8] px-9 py-3 text-base font-extrabold tracking-tight text-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.55),0_0_18px_rgba(255,255,255,0.35),0_0_36px_rgba(255,255,255,0.15),0_3px_0_0_rgba(30,27,75,0.85),0_8px_22px_rgba(67,56,202,0.45),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:shadow-[0_0_0_1.5px_rgba(255,255,255,0.65),0_0_22px_rgba(255,255,255,0.4),0_0_40px_rgba(255,255,255,0.18),0_4px_0_0_rgba(30,27,75,0.85),0_12px_28px_rgba(67,56,202,0.55),inset_0_1px_0_rgba(255,255,255,0.32)] active:translate-y-0 md:min-w-[12.25rem] md:px-11 md:py-3 md:text-[1.05rem]"
+            >
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-2 top-0 h-1/2 rounded-full bg-gradient-to-b from-white/22 to-transparent"
+              />
+              <span className="relative">지금 신청하기 →</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Short luminous hairline — deep blue with soft center glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-[8%] bottom-0 h-px md:inset-x-[10%]"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(40,70,140,0.55) 12%, rgba(90,140,220,0.95) 38%, rgba(160,200,255,0.7) 50%, rgba(90,140,220,0.95) 62%, rgba(40,70,140,0.55) 88%, transparent 100%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-[16%] bottom-0 h-[2px] blur-[1.5px] md:inset-x-[18%]"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(80,130,210,0.35) 30%, rgba(140,185,255,0.45) 50%, rgba(80,130,210,0.35) 70%, transparent 100%)",
+          }}
+        />
       </header>
 
-      {/* ---------- TOP INFO ROW ---------- */}
+      {/* ---------- Floating copy (repositioned) ---------- */}
       <MotionLayer
         x={info.x}
         y={info.y}
-        className="site-shell relative z-20 grid flex-1 grid-cols-1 gap-8 pt-10 md:grid-cols-3 md:pt-12"
+        className="pointer-events-none absolute inset-0 z-20"
       >
+        {/* 48-Hour — top-right */}
         <motion.h2
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="text-2xl font-bold leading-[1.05] tracking-tight text-foreground md:text-3xl"
+          className="absolute right-[clamp(0.75rem,3vw,2rem)] top-[clamp(5.5rem,11vh,7.5rem)] text-right text-3xl font-bold leading-[1.05] tracking-tight text-white [text-shadow:0_0_24px_rgba(160,200,255,0.35)] md:text-4xl lg:text-[2.75rem]"
         >
           48-Hour
           <br />
           WI Zerothon
         </motion.h2>
 
+        {/* Bring a spark… → bottom-left */}
         <motion.p
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="justify-self-center text-center font-mono text-sm leading-relaxed text-foreground/90 md:text-left md:justify-self-auto"
+          className="absolute bottom-[clamp(14%,16vh,20%)] left-[clamp(1rem,4vw,3rem)] max-w-[16rem] font-mono text-sm leading-relaxed text-white/90 md:text-base"
         >
           Bring a spark of an idea.
           <br />
           Leave with intelligence.
         </motion.p>
 
+        {/* Event blurb → mid-right */}
         <motion.p
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-sm justify-self-start font-mono text-xs leading-relaxed text-foreground/80 md:justify-self-end md:text-right"
+          className="absolute right-[clamp(1rem,4vw,3rem)] top-[clamp(28%,34vh,42%)] max-w-[17rem] text-right font-mono text-xs leading-relaxed text-white/80 md:max-w-[19rem] md:text-sm"
         >
           kt is WI ZEROTHON — a 48-hour build sprint where designers, engineers,
           and researchers turn zero into shipped. One question: what will you
@@ -479,26 +823,110 @@ export function HeroHaoqi() {
 
       {/* Stickers render in WebGL (behind glass) for refraction — see SceneStickers */}
 
-      {/* ---------- BOTTOM HEADLINE ---------- */}
-      <MotionLayer x={headline.x} y={headline.y} className="site-shell relative z-20 pb-16">
-        <motion.h1
-          initial={{ opacity: 0, y: 28 }}
+      {/* Tagline + CTAs — original first-screen position under ZEROTHON */}
+      <div
+        id="hero-cta"
+        ref={(node) => {
+          ;(heroCtaRef as { current: HTMLElement | null }).current = node
+        }}
+        className="pointer-events-none absolute inset-x-0 top-[min(78vh,80%)] z-[25] flex -translate-x-5 flex-col items-center gap-4 px-4 sm:top-[min(79vh,81%)] sm:-translate-x-6 sm:gap-5 md:top-[min(80vh,82%)] md:-translate-x-8"
+      >
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-[16ch] text-left text-[clamp(4rem,10.4vw,11.5rem)] font-black uppercase leading-[0.88] tracking-[-0.055em] text-foreground"
+          transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          style={{ x: headline.x, y: headline.y }}
+          className="text-center text-sm font-semibold uppercase tracking-[0.22em] text-white sm:text-base sm:tracking-[0.26em] md:text-lg md:tracking-[0.28em]"
         >
-          <span className="block origin-left scale-x-[0.96]">
-            <span className="block">What will you</span>
-            <span className="mt-[0.02em] block">
-              build with{" "}
-              <span className="bg-gradient-to-b from-[#e8dcff] via-[#c9b0ff] to-[#9b7aef] bg-clip-text text-transparent">
-                AI
-              </span>
-              <span>?</span>
-            </span>
+          What will you build with{" "}
+          <span className="bg-gradient-to-r from-[#22d3ee] via-[#67e8f9] to-[#c084fc] bg-clip-text font-bold text-transparent [text-shadow:none] drop-shadow-[0_0_18px_rgba(34,211,238,0.45)]">
+            AI
           </span>
-        </motion.h1>
-      </MotionLayer>
+          <span className="bg-gradient-to-r from-[#c084fc] to-[#e879f9] bg-clip-text font-bold text-transparent">
+            ?
+          </span>
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="pointer-events-auto flex flex-wrap items-center justify-center gap-4 sm:gap-5"
+          style={{ fontFamily: "var(--font-nav)" }}
+        >
+          <button
+            type="button"
+            onClick={openApplyModal}
+            data-cursor="link"
+            className="relative min-w-[14.5rem] overflow-hidden rounded-full bg-gradient-to-r from-[#a855f7] via-[#6366f1] to-[#22d3ee] px-12 py-3.5 text-base font-extrabold tracking-tight text-white shadow-[0_0_0_1.5px_rgba(255,255,255,0.6),0_0_20px_rgba(255,255,255,0.4),0_0_42px_rgba(255,255,255,0.18),0_0_28px_rgba(99,102,241,0.45),0_0_48px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] ring-1 ring-white/45 transition hover:brightness-110 md:min-w-[16.5rem] md:px-14 md:py-4 md:text-lg"
+          >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -left-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-white/50 blur-md"
+            />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-3 top-0 h-1/2 rounded-full bg-gradient-to-b from-white/30 to-transparent"
+            />
+            <span className="relative">지금 신청하기 →</span>
+          </button>
+          <a
+            href="#about"
+            data-cursor="link"
+            className="min-w-[14.5rem] rounded-full border border-[#7dd3fc]/70 bg-transparent px-12 py-3.5 text-center text-base font-bold tracking-tight text-white transition hover:border-[#a5f3fc] hover:bg-white/5 md:min-w-[16.5rem] md:px-14 md:py-4 md:text-lg"
+          >
+            대회 소개 보기
+          </a>
+        </motion.div>
+      </div>
+      </div>
+      </div>
+
+      {/* Props live on full Earth frame (not first-screen box) — no 100svh clip */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute z-[15] hidden sm:block"
+        style={{
+          left: "clamp(0.5rem, 2vw, 1.5rem)",
+          top: "clamp(5%, 7vh, 11%)",
+          x: robotX,
+          y: robotY,
+          rotate: robotFloat.rotate,
+          filter: robotShadow,
+          willChange: "transform",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hero/ROBOT.png"
+          alt=""
+          draggable={false}
+          className="h-auto w-[min(28vw,250px)] select-none object-contain md:w-[min(24vw,280px)] lg:w-[min(20vw,310px)]"
+        />
+      </motion.div>
+
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute z-[15] hidden sm:block"
+        style={{
+          right: "clamp(0.75rem, 3vw, 2.5rem)",
+          top: "min(72vh, 78%)",
+          x: laptopX,
+          y: laptopY,
+          rotate: laptopFloat.rotate,
+          filter: laptopShadow,
+          willChange: "transform",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hero/NEW_NOTEBOOK.png"
+          alt=""
+          draggable={false}
+          className="h-auto w-[min(30vw,260px)] rotate-[8deg] select-none object-contain md:w-[min(26vw,280px)] lg:w-[min(22vw,300px)]"
+        />
+      </motion.div>
+      </div>
     </section>
   )
 }

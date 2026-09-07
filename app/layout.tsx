@@ -21,6 +21,13 @@ const pixelFont = localFont({
   weight: '400',
 })
 
+const nunitoBlack = localFont({
+  src: '../public/fonts/Nunito-Black.ttf',
+  variable: '--font-nunito',
+  display: 'swap',
+  weight: '900',
+})
+
 export const metadata: Metadata = {
   title: 'kt is AI ZEROTHON — What will you build with AI?',
   description:
@@ -41,7 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`bg-background ${geistSans.variable} ${geistMono.variable} ${pixelFont.variable}`}
+      className={`bg-background ${geistSans.variable} ${geistMono.variable} ${pixelFont.variable} ${nunitoBlack.variable}`}
     >
       <body className="font-sans antialiased">
         {children}

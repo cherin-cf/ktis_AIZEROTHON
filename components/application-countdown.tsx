@@ -4,8 +4,8 @@ import { Calendar, Clock } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 
-/** 참가 마감: 2026.9.18.(금) 23:59:59 KST */
-const DEADLINE_MS = new Date("2026-09-18T23:59:59+09:00").getTime()
+/** 참가 마감: 2026.9.21.(월) 23:59:59 KST */
+const DEADLINE_MS = new Date("2026-09-21T23:59:59+09:00").getTime()
 
 const BEVEL_CLIP =
   "polygon(12px 0%, calc(100% - 12px) 0%, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0% calc(100% - 12px), 0% 12px)"
@@ -291,13 +291,44 @@ export function ApplicationCountdown({
           </>
         ) : null}
 
-        {/* Timer label */}
-        <p className={`${compact ? "mt-0" : "mt-8 md:mt-10"} text-[clamp(1.65rem,5.2vw,5.25rem)] font-black uppercase leading-none tracking-[-0.03em] text-[#c4b5fd]`}>
-          {parts.ended ? "참가 신청이 마감되었습니다" : "참가 마감까지"}
+        {/* Timer label — solid「참가」, gradient on「마감까지」only */}
+        <p
+          className={`${compact ? "mt-0" : "mt-8 md:mt-10"} whitespace-nowrap text-[clamp(2.15rem,7vw,6.75rem)] font-black leading-none tracking-[-0.03em]`}
+        >
+          {parts.ended ? (
+            <span className="text-white">참가 신청이 마감되었습니다</span>
+          ) : (
+            <>
+              <span
+                className="text-white"
+                style={{
+                  filter:
+                    "drop-shadow(0 0 10px rgba(255,255,255,0.35))",
+                }}
+              >
+                참가
+              </span>
+              <span
+                style={{
+                  backgroundImage:
+                    "linear-gradient(90deg, #e8f9ff 0%, #7dd3fc 28%, #4fc3f7 48%, #8b9cff 68%, #b794f6 84%, #e9d5ff 100%)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                  WebkitTextFillColor: "transparent",
+                  filter:
+                    "drop-shadow(0 0 22px rgba(79,195,247,0.5)) drop-shadow(0 0 32px rgba(183,148,246,0.35))",
+                }}
+              >
+                {" "}
+                마감까지
+              </span>
+            </>
+          )}
         </p>
 
         {/* Timer frame */}
-        <div className="relative mt-6 w-full md:mt-8">
+        <div className="relative mt-16 w-full md:mt-20 lg:mt-24">
           <div
             aria-hidden
             className="pointer-events-none absolute -left-3 top-1/2 h-36 w-36 -translate-y-1/2 rounded-full bg-[#22d3ee]/28 blur-3xl md:-left-6 md:h-48 md:w-48"
@@ -345,7 +376,7 @@ export function ApplicationCountdown({
         {!compact ? (
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2 font-mono text-base tracking-wide text-[#67e8f9] md:mt-10 md:gap-2.5 md:text-lg">
           <Calendar className="h-4 w-4 shrink-0 opacity-90" strokeWidth={1.75} />
-          <span>DEADLINE · 2026. 9. 18. (금) 23:59 KST</span>
+          <span>DEADLINE · 2026. 9. 21. (월) 23:59 KST</span>
           <Clock className="h-4 w-4 shrink-0 opacity-90" strokeWidth={1.75} />
         </div>
         ) : null}

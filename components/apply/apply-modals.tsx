@@ -375,7 +375,7 @@ export function TeamApplyModal({ onClose }: { onClose: () => void }) {
         </a>
         <p className="text-center text-base leading-relaxed text-[#4a4270] md:text-lg">
           첨부 신청서를 작성해{" "}
-          <span className="font-semibold text-[#7c3aed]">9.18.(금)</span> 까지
+          <span className="font-semibold text-[#7c3aed]">9.21.(월)</span> 까지
           아래 메일로 보내주세요!
         </p>
         <a

@@ -22,6 +22,9 @@ out/
 dist/
 tsconfig.tsbuildinfo
 
+# Hero glass restore snapshot (say "원복" to restore)
+components/hero/*.ORIGINAL.bak
+
 # Local / analysis junk (not for deploy)
 .video-analysis/
 .DS_Store

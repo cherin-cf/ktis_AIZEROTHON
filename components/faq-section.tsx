@@ -69,7 +69,7 @@ const FAQ_SECTIONS: {
         q: "누가 참가할 수 있나요?",
         a: (
           <AnswerText>
-            <p>kt is 구성원이라면 누구나 참가할 수 있습니다.</p>
+            <p>kt is 직원이라면 참가할 수 있습니다.</p>
           </AnswerText>
         ),
       },
@@ -483,7 +483,7 @@ function FaqHeaderVisual() {
         unoptimized
         draggable={false}
         priority
-        className="relative z-[1] h-auto w-full mix-blend-screen drop-shadow-[0_0_48px_rgba(124,108,240,0.4)]"
+        className="relative z-[1] h-auto w-full drop-shadow-[0_0_48px_rgba(124,108,240,0.4)]"
       />
     </div>
   )
@@ -637,7 +637,7 @@ export function FaqSection() {
   return (
     <section
       id="faq"
-      className="relative overflow-hidden border-t border-border bg-background"
+      className="relative z-20 overflow-hidden border-t border-border bg-background"
     >
       <Twinkles />
 
