@@ -725,7 +725,7 @@ export function HeroHaoqi() {
             style={{ fontFamily: "var(--font-nav)" }}
           >
             {[
-              { label: "대회 소개", href: "#about" },
+              { label: "대회 소개", href: "#introduce" },
               { label: "참가 방법", href: "#guide" },
               { label: "FAQ", href: "#faq" },
             ].map((item) => (
@@ -733,9 +733,15 @@ export function HeroHaoqi() {
                 key={item.href}
                 href={item.href}
                 data-cursor="link"
-                className="text-base font-bold tracking-tight text-white/95 [text-shadow:0_0_16px_rgba(180,210,255,0.35)] transition hover:text-white md:text-lg lg:text-xl"
+                className="group relative px-3 py-2 text-base font-bold tracking-tight text-white/90 transition-colors duration-200 hover:text-white active:text-white/80 md:px-4 md:text-lg lg:text-xl"
               >
-                {item.label}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-1/2 top-1/2 h-11 w-[160%] -translate-x-1/2 -translate-y-1/2 rounded-md bg-[radial-gradient(ellipse_95%_80%_at_50%_50%,rgba(200,220,255,0.5)_0%,rgba(150,185,255,0.22)_45%,rgba(100,140,230,0.08)_70%,transparent_88%)] opacity-0 blur-[1.5px] transition-opacity duration-200 group-hover:opacity-100 group-active:opacity-70"
+                />
+                <span className="relative z-[1] [text-shadow:0_0_14px_rgba(180,210,255,0.25)] transition-[text-shadow,filter] duration-200 group-hover:[filter:brightness(1.28)] group-hover:[text-shadow:0_0_28px_rgba(200,220,255,0.85)]">
+                  {item.label}
+                </span>
               </a>
             ))}
           </nav>
@@ -871,7 +877,7 @@ export function HeroHaoqi() {
             <span className="relative">지금 신청하기 →</span>
           </button>
           <a
-            href="#about"
+            href="#introduce"
             data-cursor="link"
             className="min-w-[14.5rem] rounded-full border border-[#7dd3fc]/70 bg-transparent px-12 py-3.5 text-center text-base font-bold tracking-tight text-white transition hover:border-[#a5f3fc] hover:bg-white/5 md:min-w-[16.5rem] md:px-14 md:py-4 md:text-lg"
           >
@@ -887,8 +893,8 @@ export function HeroHaoqi() {
         aria-hidden
         className="pointer-events-none absolute z-[15] hidden sm:block"
         style={{
-          left: "clamp(0.5rem, 2vw, 1.5rem)",
-          top: "clamp(5%, 7vh, 11%)",
+          left: "clamp(1.25rem, 3.5vw, 2.75rem)",
+          top: "clamp(8%, 10vh, 14%)",
           x: robotX,
           y: robotY,
           rotate: robotFloat.rotate,

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { downloadApplyForm } from "@/lib/apply-form"
 
 function Field({
   label,
@@ -366,13 +367,13 @@ export function TeamApplyModal({ onClose }: { onClose: () => void }) {
   return (
     <ModalShell title="팀 신청 안내" onClose={onClose}>
       <div className="space-y-6">
-        <a
-          href="/apply/team-application-form.docx"
-          download="양식_2026년 kt is WI 제로톤 참가신청서.docx"
+        <button
+          type="button"
+          onClick={() => void downloadApplyForm()}
           className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#7c3aed] bg-[#f5f3ff] px-5 py-3.5 text-base font-semibold text-[#7c3aed] transition-colors hover:bg-[#ede9fe]"
         >
           신청서 양식 다운로드
-        </a>
+        </button>
         <p className="text-center text-base leading-relaxed text-[#4a4270] md:text-lg">
           첨부 신청서를 작성해{" "}
           <span className="font-semibold text-[#7c3aed]">9.21.(월)</span> 까지

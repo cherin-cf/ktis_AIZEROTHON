@@ -6,7 +6,7 @@ import { useApplyModal } from "@/components/apply/apply-modal-context"
 import { KtIsMark } from "@/components/kt-is-mark"
 
 const links = [
-  { label: "대회 소개", href: "#about" },
+  { label: "대회 소개", href: "#introduce" },
   { label: "참가 방법", href: "#guide" },
 ]
 

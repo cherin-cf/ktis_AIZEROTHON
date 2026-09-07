@@ -4,6 +4,7 @@ import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-mot
 import Image from "next/image"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Reveal } from "@/components/reveal"
+import { downloadApplyForm } from "@/lib/apply-form"
 
 /* Assets: Downloads/ICON → public/guide/*.png (trimmed to content bounds) */
 const V = "g5"
@@ -106,33 +107,56 @@ function ActionButton({
   href,
   children,
   download,
+  onClick,
 }: {
-  href: string
+  href?: string
   children: ReactNode
   download?: string | boolean
+  onClick?: () => void
 }) {
+  const className =
+    "mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#3b6cff] px-5 py-4 text-lg font-semibold text-white shadow-[0_0_24px_rgba(59,108,255,0.35)] transition-colors hover:bg-[#5b8cff] md:text-xl"
+  const motionProps = {
+    whileHover: { scale: 1.02 },
+    whileTap: { scale: 0.98 },
+    animate: {
+      boxShadow: [
+        "0 0 16px rgba(59,108,255,0.28)",
+        "0 0 28px rgba(59,108,255,0.5)",
+        "0 0 16px rgba(59,108,255,0.28)",
+      ],
+    },
+    transition: {
+      boxShadow: {
+        duration: 2.4,
+        repeat: Number.POSITIVE_INFINITY,
+        ease: "easeInOut" as const,
+      },
+    },
+  }
+
+  if (onClick) {
+    return (
+      <motion.button
+        type="button"
+        onClick={onClick}
+        data-cursor="link"
+        className={className}
+        {...motionProps}
+      >
+        {children}
+        <span aria-hidden>→</span>
+      </motion.button>
+    )
+  }
+
   return (
     <motion.a
       href={href}
       download={download}
       data-cursor="link"
-      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#3b6cff] px-5 py-4 text-lg font-semibold text-white shadow-[0_0_24px_rgba(59,108,255,0.35)] transition-colors hover:bg-[#5b8cff] md:text-xl"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      animate={{
-        boxShadow: [
-          "0 0 16px rgba(59,108,255,0.28)",
-          "0 0 28px rgba(59,108,255,0.5)",
-          "0 0 16px rgba(59,108,255,0.28)",
-        ],
-      }}
-      transition={{
-        boxShadow: {
-          duration: 2.4,
-          repeat: Number.POSITIVE_INFINITY,
-          ease: "easeInOut",
-        },
-      }}
+      className={className}
+      {...motionProps}
     >
       {children}
       <span aria-hidden>→</span>
@@ -586,10 +610,7 @@ export function GuideSection() {
                         </a>
                       </p>
                     </div>
-                    <ActionButton
-                      href="/apply/team-application-form.docx"
-                      download="양식_2026년 kt is WI 제로톤 참가신청서.docx"
-                    >
+                    <ActionButton onClick={() => void downloadApplyForm()}>
                       참가 신청서 다운로드
                     </ActionButton>
                   </div>

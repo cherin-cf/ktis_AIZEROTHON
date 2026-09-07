@@ -10,10 +10,12 @@ import {
   useState,
   type ReactNode,
 } from "react"
+import {
+  APPLY_FORM_DOWNLOAD_NAME,
+  downloadApplyForm,
+} from "@/lib/apply-form"
 
 const APPLY_EMAIL = "minj.kang@kt.com"
-const APPLY_FORM_FILE = "/apply/team-application-form.docx"
-const APPLY_FORM_DOWNLOAD_NAME = "양식_2026년 kt is WI 제로톤 참가신청서.docx"
 
 type ApplyModalContextValue = {
   openApplyModal: () => void
@@ -138,16 +140,24 @@ function ParticipateApplyModal({
                 </a>
               </div>
 
-              <motion.a
-                href={APPLY_FORM_FILE}
-                download={APPLY_FORM_DOWNLOAD_NAME}
+              <motion.button
+                type="button"
+                onClick={() => {
+                  void downloadApplyForm().catch(() => {
+                    // Fallback: navigate with download attr
+                    const a = document.createElement("a")
+                    a.href = "/apply/team-application-form.docx"
+                    a.download = APPLY_FORM_DOWNLOAD_NAME
+                    a.click()
+                  })
+                }}
                 className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#7c6cf0] to-[#6d4aff] px-5 py-4 text-lg font-semibold text-white shadow-[0_0_24px_rgba(124,108,240,0.35)] transition-colors hover:from-[#8b7cf5] hover:to-[#7c5cff] md:text-xl"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <Download className="h-5 w-5" />
                 참가 신청서 다운로드
-              </motion.a>
+              </motion.button>
             </div>
           </motion.div>
         </motion.div>
